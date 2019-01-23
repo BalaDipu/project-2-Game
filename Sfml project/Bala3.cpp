@@ -11,22 +11,20 @@ class guldi
 public:
     Sprite shape;
 
-    guldi(Texture *texture, Vector2f pos)
+    guldi(Texture *texture)
     {
-        pos.x=pos.x+60;
         shape.setTexture(*texture);
         shape.setScale(0.07f, 0.07f);
-        shape.setPosition(pos);
     }
 
 };
 
-class Enemy
+class Aircraft
 {
 public:
     Sprite shape;
 
-    Enemy(Texture *texture, Vector2u windowSize)
+    Aircraft(Texture *texture, Vector2u windowSize)
     {
         shape.setTexture(*texture);
         shape.setScale(0.07f, 0.07f);
@@ -38,12 +36,12 @@ int main()
 {
     srand(time(NULL));
 
-    RenderWindow window(VideoMode(1300,800),"Battle For Avenger");
+    RenderWindow window(VideoMode(1300,800),"Save The People");
     window.setFramerateLimit(60);
 
     Font font;
     font.loadFromFile("Fonts/bala.TTF");
-    Texture halk,bullet2,stone,mbg,space2,Fire;
+    Texture superweapon,guli,juddhobiman,mbg,backgra,Fire,biman,bomb;
 
     Color barr(252, 13, 13), notSelected(51, 255, 51),done(255,255,0);
 
@@ -54,32 +52,40 @@ int main()
 
     Music gamemusic,menumusic;
     gamemusic.openFromFile("Music/game.wav");
-    gamemusic.setVolume(1000);
+    gamemusic.setVolume(10);
     menumusic.openFromFile("Music/menu.wav");
-    menumusic.setVolume(1000);
+    menumusic.setVolume(20);
+    //bullettune.loadFromFile("Music/bullet.wav");
+   // bullettune.setVolume(50);
 
-    halk.loadFromFile("Textures/halk.png");
-    bullet2.loadFromFile("Textures/bullet2.png");
-    stone.loadFromFile("Textures/lola.png");
-    space2.loadFromFile("Textures/bg.jpg");
+
+    superweapon.loadFromFile("Textures/superweapon.png");
+    guli.loadFromFile("Textures/guli.png");
+    juddhobiman.loadFromFile("Textures/lola1.png");
+    biman.loadFromFile("Textures/lola.png");
+    backgra.loadFromFile("Textures/bg.jpg");
     bullettune.loadFromFile("Music/bullet.wav");
     crashtune.loadFromFile("Music/crash.wav");
     coll.loadFromFile("Music/collision.wav");
     mbg.loadFromFile("Textures/menu.jpg");
-    button1.loadFromFile("Music/button.wav");
+    button1.loadFromFile("Music/menu.ogg");
     button.loadFromFile("Music/select.wav");
     Fire.loadFromFile("Textures/fire.png");
+    bomb.loadFromFile("Textures/bomb.png");
+
     Sound fire(bullettune),crash(crashtune),collision(coll),menubutton(button1),menuok(button);
 
-    Sprite menubg(mbg),Hulk(halk),lbg1(space2);
+    Sprite menubg(mbg),Bala(superweapon),lbg1(backgra),bmn1(biman),bmn2(biman);
     lbg1.setScale(1.4f,1.2f);
-    Hulk.setScale(0.2f,0.2f);
+    Bala.setScale(0.2f,0.2f);
     menubg.setScale(1.4f,1.4f);
     menubg.setPosition(0.0f,0.0f);
+    bmn1.setScale(0.1,0.1);
+    bmn2.setScale(0.1,0.1);
     Text gameovertxt,scoretxt,lifetxt,gametxt,newgametxt,highscoretxt,helptxt,exittxt,loadgametxt;
 
     gametxt.setFont(font);
-    gametxt.setString("Save  the people");
+    gametxt.setString("Save the people");
     gametxt.setCharacterSize(80);
     gametxt.setScale(1.f,1.f);
     gametxt.setFillColor(Color::Red);
@@ -127,14 +133,15 @@ int main()
     gameovertxt.setPosition(100.f, window.getSize().y / 2);
     gameovertxt.setString("GAME OVER!");
 
-    bool stage1=true,menu=true,level1=true;
+    bool stage=true,menu=true,level1=true,bm1=true,bm2=false;
 
     int score = 0,k=0,l;
     int shootTimer = 20;
 
-    int enemySpawnTimer = 0,life=10;
-    std::vector<Enemy> enemies;
+    int enemySpawnTimer = 0,life=10,bb=0;
+    std::vector<Aircraft> enemies;
     std::vector<guldi> bullets;
+    std::vector<guldi> b1;
 
     unsigned menuselect = 1;
 
@@ -178,7 +185,7 @@ int main()
                 if(menuselect%4 == 1)
                 {
                     score = 0;
-                    life=9;
+                    life=10;
                     enemies.clear();
                     enemySpawnTimer=0;
                     menumusic.stop();
@@ -242,18 +249,25 @@ int main()
         {
             if(level1)
             {
-                if(stage1)
+                if(stage)
                 {
                     gamemusic.play();
                     gamemusic.setLoop(true);
                     lbg1.setPosition(0.f,0.f);
-                    Hulk.setPosition(Vector2f(window.getSize().x/2,window.getSize().y-180));
-                    stage1 = false;
+                    Bala.setPosition(Vector2f(window.getSize().x/2,window.getSize().y-180));
+                    bmn1.setPosition(10.f,10.f);
+                    bmn2.setPosition(window.getSize().x-70,10);
+                    stage = false;
+                    bb=0;
                 }
                 if(Keyboard::isKeyPressed(Keyboard::Left))
-                    Hulk.move(-10.f, 0.f);
+                    Bala.move(-10.f, 0.f);
                 if(Keyboard::isKeyPressed(Keyboard::Right))
-                    Hulk.move(10.f, 0.f);
+                    Bala.move(10.f, 0.f);
+                if(Keyboard::isKeyPressed(Keyboard::Up))
+                    Bala.move(0.f, -10.f);
+                if(Keyboard::isKeyPressed(Keyboard::Down))
+                    Bala.move(0.f, 10.f);
                 if(Keyboard::isKeyPressed(Keyboard::Escape))
                 {
                     gamemusic.stop();
@@ -263,19 +277,27 @@ int main()
                 }
 
                 ///collision with window
-                if (Hulk.getPosition().x <= 0) //Left
-                    Hulk.setPosition(0.f, Hulk.getPosition().y);
-                if (Hulk.getPosition().x >= window.getSize().x - Hulk.getGlobalBounds().width) //Right
-                    Hulk.setPosition(window.getSize().x - Hulk.getGlobalBounds().width, Hulk.getPosition().y);
+                if (Bala.getPosition().x <= 0) //Left
+                    Bala.setPosition(0.f, Bala.getPosition().y);
+                if (Bala.getPosition().x >= window.getSize().x - Bala.getGlobalBounds().width) //Right
+                    Bala.setPosition(window.getSize().x - Bala.getGlobalBounds().width, Bala.getPosition().y);
+                if (Bala.getPosition().y <= 0) //Left
+                    Bala.setPosition(Bala.getPosition().x,0);
+                if (Bala.getPosition().y >= window.getSize().y - Bala.getGlobalBounds().height+50) //Right
+                    Bala.setPosition( Bala.getPosition().x,50+window.getSize().y - Bala.getGlobalBounds().height);
 
-                if (shootTimer < 15)
+
+                if (shootTimer < 10)
                     shootTimer++;
 
-                if ((Keyboard::isKeyPressed(Keyboard::Space)) && shootTimer >= 15) //Shooting
+                if ((Keyboard::isKeyPressed(Keyboard::Space)) && shootTimer >= 10)//Shooting
                 {
                     fire.play();
-                    bullets.push_back(guldi(&bullet2, Hulk.getPosition()));
-                    shootTimer = 0; //reset timer
+                    bullets.push_back(guldi(&guli));
+                    bullets[bullets.size()-1].shape.setPosition(Vector2f(Bala.getPosition().x+40,Bala.getPosition().y));
+                    bullets.push_back(guldi(&guli));
+                    bullets[bullets.size()-1].shape.setPosition(Vector2f(Bala.getPosition().x+85,Bala.getPosition().y));
+                    shootTimer = 0;//reset timer
                 }
                 if(life == 0)
                 {
@@ -311,14 +333,63 @@ int main()
                     }
                 }
                 //Enemy
-                if (enemySpawnTimer < 20)
+                if (enemySpawnTimer < 15)
                     enemySpawnTimer++;
+                    if(bb<30)
+                        bb++;
+                    if(bb >=30)
+                    {
+                        bb=0;
+                        b1.push_back(guldi(&bomb));
+                        b1[b1.size()-1].shape.setScale(0.2f,0.2f);
+                        b1[b1.size()-1].shape.setPosition(bmn1.getPosition().x+15,bmn1.getPosition().y+10);
+                        b1.push_back(guldi(&bomb));
+                        b1[b1.size()-1].shape.setScale(0.2f,0.2f);
+                        b1[b1.size()-1].shape.setPosition(bmn2.getPosition().x+15,bmn2.getPosition().y+10);
+                    }
+                    for(int k=0 ; k < b1.size() ; k++)
+                    {
+                        b1[k].shape.move(0,12.f);
+                        if(b1[k].shape.getPosition().y > window.getSize().y)
+                            b1.erase(b1.begin()+k);
+                        if(b1[k].shape.getGlobalBounds().intersects(Bala.getGlobalBounds()))
+                        {
+                             b1.erase(b1.begin()+k);
+                             life--;
+                        }
+                    }
 
                 //enemy spawn
-                if (enemySpawnTimer >= 20)
+                if (enemySpawnTimer >= 15)
                 {
-                    enemies.push_back(Enemy(&stone, window.getSize()));
+                    enemies.push_back(Aircraft(&juddhobiman, window.getSize()));
+                    enemies[enemies.size()-1].shape.setScale(0.7,0.7);
                     enemySpawnTimer = 0; //reset timer
+                }
+
+                if(bm1)
+                {
+                    bmn1.move(8.0,0.0);
+                    if(bmn1.getPosition().x > window.getSize().x-60)
+                        bm1=false;
+                }
+                if(!bm1)
+                {
+                    bmn1.move(-8.0,0.0);
+                    if(bmn1.getPosition().x < 10)
+                        bm1=true;
+                }
+                 if(bm2)
+                {
+                    bmn2.move(8.0,0.0);
+                    if(bmn2.getPosition().x > window.getSize().x-60)
+                        bm2=false;
+                }
+                if(!bm2)
+                {
+                    bmn2.move(-8.0,0.0);
+                    if(bmn2.getPosition().x < 10)
+                        bm2=true;
                 }
 
                 for (size_t i = 0; i < enemies.size(); i++)
@@ -327,7 +398,6 @@ int main()
 
                     if (enemies[i].shape.getPosition().x < 0.0)
                     {
-                        life--;
                         enemies.erase(enemies.begin() + i);
                         break;
                     }
@@ -337,7 +407,7 @@ int main()
                 lifetxt.setString("Life: " + std::to_string(life+1));
                 window.clear();
                 window.draw(lbg1);
-                window.draw(Hulk);
+                window.draw(Bala);
 
                 for (size_t i = 0; i < bullets.size(); i++)
                     window.draw(bullets[i].shape);
@@ -345,8 +415,13 @@ int main()
                 for (size_t i = 0; i < enemies.size(); i++)
                     window.draw(enemies[i].shape);
 
+                 for (size_t i = 0; i < b1.size(); i++)
+                    window.draw(b1[i].shape);
+
                 window.draw(scoretxt);
                 window.draw(lifetxt);
+                window.draw(bmn1);
+                window.draw(bmn2);
 
                 if(life<0)
                     window.draw(gameovertxt);

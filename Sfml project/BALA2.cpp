@@ -41,7 +41,7 @@ int main()
 
     Font font;
     font.loadFromFile("Fonts/bala.TTF");
-    Texture superweapon,guli,juddhobiman,mbg,backgra,Fire;
+    Texture superweapon,guli,juddhobiman,mbg,backgra,Fire,biman,bomb;
 
     Color barr(252, 13, 13), notSelected(51, 255, 51),done(255,255,0);
 
@@ -61,7 +61,8 @@ int main()
 
     superweapon.loadFromFile("Textures/superweapon.png");
     guli.loadFromFile("Textures/guli.png");
-    juddhobiman.loadFromFile("Textures/lola.png");
+    juddhobiman.loadFromFile("Textures/lola1.png");
+    biman.loadFromFile("Textures/lola.png");
     backgra.loadFromFile("Textures/bg.jpg");
     bullettune.loadFromFile("Music/bullet.wav");
     crashtune.loadFromFile("Music/crash.wav");
@@ -70,13 +71,17 @@ int main()
     button1.loadFromFile("Music/menu.ogg");
     button.loadFromFile("Music/select.wav");
     Fire.loadFromFile("Textures/fire.png");
+    bomb.loadFromFile("Textures/bomb.png");
+
     Sound fire(bullettune),crash(crashtune),collision(coll),menubutton(button1),menuok(button);
 
-    Sprite menubg(mbg),Bala(superweapon),lbg1(backgra);
+    Sprite menubg(mbg),Bala(superweapon),lbg1(backgra),bmn1(biman),bmn2(biman);
     lbg1.setScale(1.4f,1.2f);
     Bala.setScale(0.2f,0.2f);
     menubg.setScale(1.4f,1.4f);
     menubg.setPosition(0.0f,0.0f);
+    bmn1.setScale(0.1,0.1);
+    bmn2.setScale(0.1,0.1);
     Text gameovertxt,scoretxt,lifetxt,gametxt,newgametxt,highscoretxt,helptxt,exittxt,loadgametxt;
 
     gametxt.setFont(font);
@@ -128,14 +133,15 @@ int main()
     gameovertxt.setPosition(100.f, window.getSize().y / 2);
     gameovertxt.setString("GAME OVER!");
 
-    bool stage=true,menu=true,level1=true;
+    bool stage=true,menu=true,level1=true,bm1=true,bm2=false;
 
     int score = 0,k=0,l;
     int shootTimer = 20;
 
-    int enemySpawnTimer = 0,life=10;
+    int enemySpawnTimer = 0,life=10,bb=0;
     std::vector<Aircraft> enemies;
     std::vector<guldi> bullets;
+    std::vector<guldi> b1;
 
     unsigned menuselect = 1;
 
@@ -179,7 +185,7 @@ int main()
                 if(menuselect%4 == 1)
                 {
                     score = 0;
-                    life=9;
+                    life=10;
                     enemies.clear();
                     enemySpawnTimer=0;
                     menumusic.stop();
@@ -249,12 +255,19 @@ int main()
                     gamemusic.setLoop(true);
                     lbg1.setPosition(0.f,0.f);
                     Bala.setPosition(Vector2f(window.getSize().x/2,window.getSize().y-180));
+                    bmn1.setPosition(10.f,10.f);
+                    bmn2.setPosition(window.getSize().x-70,10);
                     stage = false;
+                    bb=0;
                 }
                 if(Keyboard::isKeyPressed(Keyboard::Left))
                     Bala.move(-10.f, 0.f);
                 if(Keyboard::isKeyPressed(Keyboard::Right))
                     Bala.move(10.f, 0.f);
+                if(Keyboard::isKeyPressed(Keyboard::Up))
+                    Bala.move(0.f, -10.f);
+                if(Keyboard::isKeyPressed(Keyboard::Down))
+                    Bala.move(0.f, 10.f);
                 if(Keyboard::isKeyPressed(Keyboard::Escape))
                 {
                     gamemusic.stop();
@@ -268,6 +281,11 @@ int main()
                     Bala.setPosition(0.f, Bala.getPosition().y);
                 if (Bala.getPosition().x >= window.getSize().x - Bala.getGlobalBounds().width) //Right
                     Bala.setPosition(window.getSize().x - Bala.getGlobalBounds().width, Bala.getPosition().y);
+                if (Bala.getPosition().y <= 0) //Left
+                    Bala.setPosition(Bala.getPosition().x,0);
+                if (Bala.getPosition().y >= window.getSize().y - Bala.getGlobalBounds().height+50) //Right
+                    Bala.setPosition( Bala.getPosition().x,50+window.getSize().y - Bala.getGlobalBounds().height);
+
 
                 if (shootTimer < 10)
                     shootTimer++;
@@ -317,12 +335,61 @@ int main()
                 //Enemy
                 if (enemySpawnTimer < 15)
                     enemySpawnTimer++;
+                    if(bb<30)
+                        bb++;
+                    if(bb >=30)
+                    {
+                        bb=0;
+                        b1.push_back(guldi(&bomb));
+                        b1[b1.size()-1].shape.setScale(0.2f,0.2f);
+                        b1[b1.size()-1].shape.setPosition(bmn1.getPosition().x+15,bmn1.getPosition().y+10);
+                        b1.push_back(guldi(&bomb));
+                        b1[b1.size()-1].shape.setScale(0.2f,0.2f);
+                        b1[b1.size()-1].shape.setPosition(bmn2.getPosition().x+15,bmn2.getPosition().y+10);
+                    }
+                    for(int k=0 ; k < b1.size() ; k++)
+                    {
+                        b1[k].shape.move(0,12.f);
+                        if(b1[k].shape.getPosition().y > window.getSize().y)
+                            b1.erase(b1.begin()+k);
+                        if(b1[k].shape.getGlobalBounds().intersects(Bala.getGlobalBounds()))
+                        {
+                             b1.erase(b1.begin()+k);
+                             life--;
+                        }
+                    }
 
                 //enemy spawn
                 if (enemySpawnTimer >= 15)
                 {
                     enemies.push_back(Aircraft(&juddhobiman, window.getSize()));
+                    enemies[enemies.size()-1].shape.setScale(0.7,0.7);
                     enemySpawnTimer = 0; //reset timer
+                }
+
+                if(bm1)
+                {
+                    bmn1.move(8.0,0.0);
+                    if(bmn1.getPosition().x > window.getSize().x-60)
+                        bm1=false;
+                }
+                if(!bm1)
+                {
+                    bmn1.move(-8.0,0.0);
+                    if(bmn1.getPosition().x < 10)
+                        bm1=true;
+                }
+                 if(bm2)
+                {
+                    bmn2.move(8.0,0.0);
+                    if(bmn2.getPosition().x > window.getSize().x-60)
+                        bm2=false;
+                }
+                if(!bm2)
+                {
+                    bmn2.move(-8.0,0.0);
+                    if(bmn2.getPosition().x < 10)
+                        bm2=true;
                 }
 
                 for (size_t i = 0; i < enemies.size(); i++)
@@ -331,7 +398,6 @@ int main()
 
                     if (enemies[i].shape.getPosition().x < 0.0)
                     {
-                        life--;
                         enemies.erase(enemies.begin() + i);
                         break;
                     }
@@ -349,8 +415,13 @@ int main()
                 for (size_t i = 0; i < enemies.size(); i++)
                     window.draw(enemies[i].shape);
 
+                 for (size_t i = 0; i < b1.size(); i++)
+                    window.draw(b1[i].shape);
+
                 window.draw(scoretxt);
                 window.draw(lifetxt);
+                window.draw(bmn1);
+                window.draw(bmn2);
 
                 if(life<0)
                     window.draw(gameovertxt);
